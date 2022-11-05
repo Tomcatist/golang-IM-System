@@ -70,6 +70,7 @@ func (client *Client) Run() {
 		case 1:
 			// 公聊模式
 			fmt.Println("公聊模式选择...")
+			client.publicChat()
 			break
 		case 2:
 			// 私聊模式
@@ -106,6 +107,33 @@ func (client *Client) updateName() bool {
 	}
 
 	return true
+}
+
+// 公聊模式
+func (client *Client) publicChat() {
+
+	var chatMsg string
+
+	// 提醒用户输入消息
+	fmt.Println(">>>>> 请输入聊天内容，exit退出")
+	fmt.Scanln(&chatMsg)
+	for chatMsg != "exit" {
+		// 发送到服务器
+		// 消息不为空，则发送
+		if len(chatMsg) != 0 {
+			sendMsg := chatMsg + "\n"
+			_, err := client.conn.Write([]byte(sendMsg))
+			if err != nil {
+				fmt.Println("conn Write err:", err)
+				break
+			}
+		}
+
+		chatMsg = ""
+		fmt.Println(">>>>> 请输入聊天内容，exit退出")
+		fmt.Scanln(&chatMsg)
+	}
+
 }
 
 
