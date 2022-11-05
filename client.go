@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"net"
+	"os"
 )
 
 type Client struct {
@@ -32,6 +34,13 @@ func NewClient(serverIp string, serverPort int) *Client {
 	return client
 }
 
+// 处理server返回的消息，直接返回到标准输出中
+func (client *Client) DealResponse() {
+	// 一旦client,conn有消息，就直接copy的std标准输出上，永久监听
+	io.Copy(os.Stdout, client.conn)
+}
+
+// 菜单函数
 func (client *Client) menu() bool {
 
 	var flag int
@@ -69,6 +78,7 @@ func (client *Client) Run() {
 		case 3:
 			// 更新用户名
 			fmt.Println("更新用户名选择选择...")
+			client.updateName()
 			break
 		}
 	}
@@ -83,6 +93,21 @@ func init() {
 	flag.IntVar(&serverPort, "port", 8888, "设置服务器端口（默认是8888）")
 }
 
+// 更新用户名方法
+func (client *Client) updateName() bool {
+	fmt.Println(">>>>>请输入用户名")
+	fmt.Scanln(&client.Name)
+
+	sendMsg := "rename|" + client.Name + "\n"
+	_, err := client.conn.Write([]byte(sendMsg))
+	if err != nil {
+		fmt.Println("conn.Write err:", err)
+		return false
+	}
+
+	return true
+}
+
 
 func main() {
 	// 命令行解析
@@ -93,6 +118,8 @@ func main() {
 		return
 	}
 	fmt.Println(">>>>>>>> 服务器链接成功")
+	// 启动server消息监听
+	go client.DealResponse()
 
 	// 启动客户端的业务
 	client.Run()
